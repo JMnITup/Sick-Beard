@@ -14,7 +14,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Sick Beard.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -35,4 +35,5 @@ else:
 # 4	Indexer's report number (if supported)
 # 5	User-defined category
 # 6	Group that the NZB was posted in e.g. alt.binaries.x
-# 7	Status of post processing. 0 = OK, 1=failed verification, 2=failed unpack, 3=1+21
+# 7	Status of post processing. 0 = OK, 1=failed verification, 2=failed unpack,
+# 3=1+21, -1 = empty_postproc and empty download
