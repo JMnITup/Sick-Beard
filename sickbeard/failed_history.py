@@ -48,12 +48,8 @@ def logFailed(release):
 
     release = prepareFailedName(release)
 
-    log_str += _log_helper(u"r_n: " + release)
-
     myDB = db.DBConnection("failed.db")
     sql_results = myDB.select("SELECT * FROM history WHERE release=?", [release])
-
-    log_str += _log_helper(u"s_r: " + repr(sql_results))
 
     if len(sql_results) == 0:
         log_str += _log_helper(u"Release not found in snatch history. Recording it as bad with no size and no proivder.", logger.WARNING)
@@ -125,11 +121,3 @@ def deleteLoggedSnatch(release, size, provider):
 
     myDB.action("DELETE FROM history WHERE release=? AND size=? AND provider=?",
                 [release, size, provider])
-
-
-def downloadSucceeded(release):
-    myDB = db.DBConnection("failed.db")
-
-    release = prepareFailedName(release)
-
-    myDB.action("DELETE FROM history WHERE release=?", [release])
