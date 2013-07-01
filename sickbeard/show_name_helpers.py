@@ -16,13 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Sick Beard.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+from glob import glob
+
 import sickbeard
 
 from sickbeard.common import countryList
-from sickbeard.helpers import sanitizeSceneName
-from sickbeard.scene_exceptions import get_scene_exceptions
+from sickbeard import scene_exceptions
+from sickbeard import helpers
 from sickbeard import logger
 from sickbeard import db
+from sickbeard import encodingKludge as ek
 
 import re
 import datetime
@@ -30,16 +34,16 @@ import datetime
 from name_parser.parser import NameParser, InvalidNameException
 
 resultFilters = ["sub(pack|s|bed)", "nlsub(bed|s)?", "swesub(bed)?",
-                 "(dir|sample|nfo)fix", "sample", "(dvd)?extras", 
+                 "(dir|sample|nfo)fix", "sample", "(dvd)?extras",
                  "dub(bed)?"]
 
 def filterBadReleases(name):
     """
     Filters out non-english and just all-around stupid releases by comparing them
     to the resultFilters contents.
-    
+
     name: the release name to check
-    
+
     Returns: True if the release name is OK, False if it's bad.
     """
 
@@ -58,7 +62,7 @@ def filterBadReleases(name):
         if check_string:
             check_string = check_string + '-' + parse_result.release_group
         else:
-            check_string = parse_result.release_group 
+            check_string = parse_result.release_group
 
     # if there's no info after the season info then assume it's fine
     if not check_string:
@@ -75,9 +79,9 @@ def filterBadReleases(name):
 def sceneToNormalShowNames(name):
     """
     Takes a show name from a scene dirname and converts it to a more "human-readable" format.
-    
+
     name: The show name to convert
-    
+
     Returns: a list of all the possible "normal" names
     """
 
@@ -85,7 +89,7 @@ def sceneToNormalShowNames(name):
         return []
 
     name_list = [name]
-    
+
     # use both and and &
     new_name = re.sub('(?i)([\. ])and([\. ])', '\\1&\\2', name, re.I)
     if new_name not in name_list:
@@ -96,7 +100,7 @@ def sceneToNormalShowNames(name):
     for cur_name in name_list:
         # add brackets around the year
         results.append(re.sub('(\D)(\d{4})$', '\\1(\\2)', cur_name))
-    
+
         # add brackets around the country
         country_match_str = '|'.join(countryList.values())
         results.append(re.sub('(?i)([. _-])('+country_match_str+')$', '\\1(\\2)', cur_name))
@@ -110,8 +114,7 @@ def makeSceneShowSearchStrings(show):
     showNames = allPossibleShowNames(show)
 
     # scenify the names
-    return map(sanitizeSceneName, showNames)
-
+    return map(helpers.sanitizeSceneName, showNames)
 
 def makeSceneSeasonSearchString (show, segment, extraSearchType=None):
 
@@ -119,10 +122,10 @@ def makeSceneSeasonSearchString (show, segment, extraSearchType=None):
 
     if show.air_by_date:
         numseasons = 0
-        
-        # the search string for air by date shows is just 
+
+        # the search string for air by date shows is just
         seasonStrings = [segment]
-    
+
     else:
         numseasonsSQlResult = myDB.select("SELECT COUNT(DISTINCT season) as numseasons FROM tv_episodes WHERE showid = ? and season != 0", [show.tvdbid])
         numseasons = int(numseasonsSQlResult[0][0])
@@ -148,7 +151,7 @@ def makeSceneSeasonSearchString (show, segment, extraSearchType=None):
             else:
                 for cur_season in seasonStrings:
                     toReturn.append(curShow + "." + cur_season)
-        
+
         # nzbmatrix is special, we build a search string just for them
         elif extraSearchType == "nzbmatrix":
             if numseasons == 1:
@@ -161,13 +164,12 @@ def makeSceneSeasonSearchString (show, segment, extraSearchType=None):
                     term_list = ['"'+x+'"' for x in term_list]
 
                 toReturn.append('"'+curShow+'"')
-    
-    if extraSearchType == "nzbmatrix":     
+
+    if extraSearchType == "nzbmatrix":
         toReturn = ['+('+','.join(toReturn)+')']
         if term_list:
             toReturn.append('+('+','.join(term_list)+')')
     return toReturn
-
 
 def makeSceneSearchString (episode):
 
@@ -205,7 +207,7 @@ def isGoodResult(name, show, log=True):
     """
 
     all_show_names = allPossibleShowNames(show)
-    showNames = map(sanitizeSceneName, all_show_names) + all_show_names
+    showNames = map(helpers.sanitizeSceneName, all_show_names) + all_show_names
 
     for curName in set(showNames):
         escaped_name = re.sub('\\\\[\\s.-]', '\W+', re.escape(curName))
@@ -229,14 +231,14 @@ def allPossibleShowNames(show):
     """
     Figures out every possible variation of the name for a particular show. Includes TVDB name, TVRage name,
     country codes on the end, eg. "Show Name (AU)", and any scene exception names.
-    
+
     show: a TVShow object that we should get the names of
-    
+
     Returns: a list of all the possible show names
     """
 
     showNames = [show.name]
-    showNames += [name for name in get_scene_exceptions(show.tvdbid)]
+    showNames += [name for name in scene_exceptions.get_scene_exceptions(show.tvdbid)]
 
     # if we have a tvrage name then use it
     if show.tvrname != "" and show.tvrname != None:
@@ -263,3 +265,34 @@ def allPossibleShowNames(show):
 
     return showNames
 
+def determineReleaseName(dir_name=None, nzb_name=None):
+    """Determine a release name from an nzb and/or folder name"""
+
+    if nzb_name is not None:
+        logger.log(u"Using nzb_name for release name.")
+        return nzb_name.rpartition('.')[0]
+
+    # try to get the release name from nzb/nfo
+    # TODO: Handle case-sensitivity
+    if dir_name:
+        file_types = ["*.nzb", "*.nfo"]
+        for search in file_types:
+            search_path = ek.ek(os.path.join, dir_name, search)
+            results = ek.ek(glob, search_path)
+            if len(results) == 1:
+                found_file = ek.ek(os.path.basename, results[0])
+                found_file = found_file.rpartition('.')[0]
+                if filterBadReleases(found_file):
+                    logger.log(u"Release name (" + found_file + ") found from file (" + results[0] + ")")
+                    return found_file.rpartition('.')[0]
+
+    # If that fails, we try the folder
+    folder = ek.ek(os.path.basename, dir_name)
+    if filterBadReleases(folder):
+        # NOTE: Multiple failed downloads will change the folder name.
+        # (e.g., appending #s)
+        # Should we handle that?
+        logger.log(u"Folder name (" + folder + ") appears to be a valid release name. Using it.")
+        return folder
+
+    return None

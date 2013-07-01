@@ -39,9 +39,7 @@ from sickbeard.exceptions import ex
 
 
 class NewznabProvider(generic.NZBProvider):
-
     def __init__(self, name, url, key=''):
-
         generic.NZBProvider.__init__(self, name)
 
         self.cache = NewznabCache(self)
@@ -69,7 +67,6 @@ class NewznabProvider(generic.NZBProvider):
         return self.enabled
 
     def _get_season_search_strings(self, show, season=None):
-
         if not show:
             return [{}]
 
@@ -88,7 +85,7 @@ class NewznabProvider(generic.NZBProvider):
             else:
                 cur_params['q'] = helpers.sanitizeSceneName(cur_exception)
 
-            if season != None:
+            if season is not None:
                 # air-by-date means &season=2010&q=2010.03, no other way to do it atm
                 if show.air_by_date:
                     cur_params['season'] = season.split('-')[0]
@@ -106,7 +103,6 @@ class NewznabProvider(generic.NZBProvider):
         return to_return
 
     def _get_episode_search_strings(self, ep_obj):
-
         params = {}
 
         if not ep_obj:
@@ -151,7 +147,6 @@ class NewznabProvider(generic.NZBProvider):
         return self._doSearch({'q': search_string})
 
     def _checkAuthFromData(self, data):
-
         try:
             parsedXML = parseString(data)
         except Exception:
@@ -166,13 +161,12 @@ class NewznabProvider(generic.NZBProvider):
             elif code == '102':
                 raise exceptions.AuthException("Your account isn't allowed to use the API on " + self.name + ", contact the administrator")
             else:
-                logger.log(u"Unknown error given from " + self.name + ": "+parsedXML.documentElement.getAttribute('description'), logger.ERROR)
+                logger.log(u"Unknown error given from " + self.name + ": " + parsedXML.documentElement.getAttribute('description'), logger.ERROR)
                 return False
 
         return True
 
     def _doSearch(self, search_params, show=None, max_age=0):
-
         params = {"t": "tvsearch",
                   "maxage": sickbeard.USENET_RETENTION,
                   "limit": 100,
@@ -264,7 +258,7 @@ class NewznabProvider(generic.NZBProvider):
                     if resultDate:
                         resultDate = datetime.datetime(*resultDate[0:6])
 
-                if date == None or resultDate > date:
+                if date is None or resultDate > date:
                     search_result = classes.Proper(title, url, resultDate)
                     results.append(search_result)
 
@@ -272,16 +266,13 @@ class NewznabProvider(generic.NZBProvider):
 
 
 class NewznabCache(tvcache.TVCache):
-
     def __init__(self, provider):
-
         tvcache.TVCache.__init__(self, provider)
 
         # only poll newznab providers every 15 minutes max
         self.minTime = 15
 
     def _getRSSData(self):
-
         params = {"t": "tvsearch",
                   "cat": '5040,5030'}
 
@@ -305,5 +296,4 @@ class NewznabCache(tvcache.TVCache):
         return data
 
     def _checkAuth(self, data):
-
         return self.provider._checkAuthFromData(data)

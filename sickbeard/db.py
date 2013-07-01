@@ -116,10 +116,10 @@ class DBConnection:
 
             if query == None:
                 return
-    
+
             sqlResult = None
             attempt = 0
-    
+
             while attempt < 5:
                 try:
                     if args == None:
@@ -142,7 +142,7 @@ class DBConnection:
                 except sqlite3.DatabaseError, e:
                     logger.log(u"Fatal error executing query: " + ex(e), logger.ERROR)
                     raise
-    
+
             return sqlResult
 
 
@@ -177,14 +177,14 @@ class DBConnection:
         for column in cursor:
             columns[column['name']] = { 'type': column['type'] }
         return columns
-    
+
     # http://stackoverflow.com/questions/3300464/how-can-i-get-dict-from-sqlite-query
     def _dict_factory(self, cursor, row):
         d = {}
         for idx, col in enumerate(cursor.description):
             d[col[0]] = row[idx]
         return d
-    
+
 def sanityCheckDatabase(connection, sanity_check):
     sanity_check(connection).check()
 
