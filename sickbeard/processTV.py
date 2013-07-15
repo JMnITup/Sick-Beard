@@ -155,20 +155,18 @@ def processDir(dirName, nzbName=None, recurse=False, failed=False):
         returnStr += logHelper(u"The directory name indicates failure. Treating this download as failed.", logger.DEBUG)
         failed = True
 
-    # take care of failed downloads
+    # finally, process
     if failed:
         returnStr += _processFailed(dirName, nzbName)
-        return returnStr
+    else:
+        # make sure the dir isn't inside a show dir
+        myDB = db.DBConnection()
+        sqlResults = myDB.select("SELECT * FROM tv_shows")
+        for sqlShow in sqlResults:
+            if dirName.lower().startswith(ek.ek(os.path.realpath, sqlShow["location"]).lower() + os.sep) or dirName.lower() == ek.ek(os.path.realpath, sqlShow["location"]).lower():
+                returnStr += logHelper(u"You're trying to post process an episode that's already been moved to its show dir", logger.ERROR)
+                return returnStr
 
-    # make sure the dir isn't inside a show dir
-    myDB = db.DBConnection()
-    sqlResults = myDB.select("SELECT * FROM tv_shows")
-    for sqlShow in sqlResults:
-        if dirName.lower().startswith(ek.ek(os.path.realpath, sqlShow["location"]).lower() + os.sep) or dirName.lower() == ek.ek(os.path.realpath, sqlShow["location"]).lower():
-            returnStr += logHelper(u"You're trying to post process an episode that's already been moved to its show dir", logger.ERROR)
-            return returnStr
-
-    # finally, process
-    returnStr += _processNormal(dirName, nzbName)
+        returnStr += _processNormal(dirName, nzbName)
 
     return returnStr
