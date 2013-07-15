@@ -28,7 +28,7 @@ import datetime
 import random
 
 from Cheetah.Template import Template
-import cherrypy.lib
+import cherrypy
 
 import sickbeard
 
@@ -587,6 +587,9 @@ class Manage:
         for release in toRemove:
             myDB.action('DELETE FROM failed WHERE release = ?', [release])
 
+        if toRemove or add:
+            raise cherrypy.HTTPRedirect('/manage/failedDownloads/')
+
         if limit == "0":
             sqlResults = myDB.select("SELECT * FROM failed")
         else:
@@ -1096,16 +1099,16 @@ class ConfigProviders:
         # add all the newznab info we got into our list
         if newznab_string:
             for curNewznabProviderStr in newznab_string.split('!!!'):
-    
+
                 if not curNewznabProviderStr:
                     continue
-    
+
                 curName, curURL, curKey = curNewznabProviderStr.split('|')
-    
+
                 newProvider = newznab.NewznabProvider(curName, curURL, curKey)
-    
+
                 curID = newProvider.getID()
-    
+
                 # if it already exists then update it
                 if curID in newznabProviderDict:
                     newznabProviderDict[curID].name = curName
@@ -1113,9 +1116,9 @@ class ConfigProviders:
                     newznabProviderDict[curID].key = curKey
                 else:
                     sickbeard.newznabProviderList.append(newProvider)
-    
+
                 finishedNames.append(curID)
-    
+
             # delete anything that is missing
             for curProvider in sickbeard.newznabProviderList:
                 if curProvider.getID() not in finishedNames:
