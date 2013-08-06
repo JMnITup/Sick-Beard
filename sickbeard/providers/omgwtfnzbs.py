@@ -103,7 +103,7 @@ class OmgwtfnzbsProvider(generic.NZBProvider):
             for item in self._doSearch(term, retention=4):
                 if 'usenetage' in item:
                     name, url = self._get_title_and_url(item)
-                    results.append(classes.Proper(name, url, datetime.fromtimestamp(item['usenetage'])))
+                    results.append(classes.Proper(name, url, datetime.fromtimestamp(float(item['usenetage']))))
         return results
 
 
