@@ -52,7 +52,7 @@ class OmgwtfnzbsProvider(generic.NZBProvider):
 
     def _checkAuth(self):
 
-        if not sickbeard.OMGWTFNZBS_USERNAME  or not sickbeard.OMGWTFNZBS_APIKEY:
+        if not sickbeard.OMGWTFNZBS_UID  or not sickbeard.OMGWTFNZBS_KEY:
             raise AuthException("Your authentication credentials for " + self.name + " are missing, check your config.")
 
         return True
@@ -101,8 +101,8 @@ class OmgwtfnzbsProvider(generic.NZBProvider):
 
         self._checkAuth()
 
-        params = {'user': sickbeard.OMGWTFNZBS_USERNAME,
-                  'api': sickbeard.OMGWTFNZBS_APIKEY,
+        params = {'user': sickbeard.OMGWTFNZBS_UID,
+                  'api': sickbeard.OMGWTFNZBS_KEY,
                   'eng': 1,
                   'catid': '19,20',  # SD,HD
                   'retention': sickbeard.USENET_RETENTION,
@@ -157,8 +157,8 @@ class OmgwtfnzbsCache(tvcache.TVCache):
         self.minTime = 20
 
     def _getRSSData(self):
-        params = {'user': sickbeard.OMGWTFNZBS_USERNAME,
-                  'api': sickbeard.OMGWTFNZBS_APIKEY,
+        params = {'user': sickbeard.OMGWTFNZBS_UID,
+                  'api': sickbeard.OMGWTFNZBS_KEY,
                   'eng': 1,
                   'catid': '19,20'}  # SD,HD
 
