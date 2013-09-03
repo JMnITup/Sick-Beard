@@ -188,3 +188,8 @@ def deleteLoggedSnatchByRelease(release):
     release = prepareFailedName(release)
 
     myDB.action("DELETE FROM history WHERE release=?", [release])
+
+
+def trimHistory():
+    myDB = db.DBConnection("failed.db")
+    myDB.action("DELETE FROM history WHERE date < " + str((datetime.datetime.today() - datetime.timedelta(days=30)).strftime(dateFormat)))

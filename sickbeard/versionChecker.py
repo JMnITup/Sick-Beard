@@ -21,6 +21,7 @@ from sickbeard import version, ui
 from sickbeard import logger
 from sickbeard import scene_exceptions
 from sickbeard.exceptions import ex
+from sickbeard import failed_history
 
 import os, platform, shutil
 import subprocess, re
@@ -55,6 +56,8 @@ class CheckVersion():
 
         # refresh scene exceptions too
         scene_exceptions.retrieve_exceptions()
+        # sure, why not?
+        failed_history.trimHistory()
 
     def find_install_type(self):
         """
