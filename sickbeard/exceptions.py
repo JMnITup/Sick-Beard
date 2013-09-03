@@ -22,22 +22,22 @@ def ex(e):
 	"""
 	Returns a unicode string from the exception text if it exists.
 	"""
-	
+
 	# sanity check
 	if not e.args or not e.args[0]:
 		return ""
 
 	e_message = fixStupidEncodings(e.args[0], True)
-	
+
 	# if fixStupidEncodings doesn't fix it then maybe it's not a string, in which case we'll try printing it anyway
 	if not e_message:
 		try:
 			e_message = str(e.args[0])
 		except:
 			e_message = ""
-	
+
 	return e_message
-	
+
 
 class SickBeardException(Exception):
 	"Generic SickBeard Exception - should never be thrown, only subclassed"
@@ -101,3 +101,9 @@ class PostProcessingFailed(SickBeardException):
 
 class FailedProcessingFailed(SickBeardException):
     "Post-processing the failed release failed"
+
+class FailedHistoryMultiSnatchException(SickBeardException):
+    "Episode was snatched again before the first one was done"""
+
+class FailedHistoryNotFoundException(SickBeardException):
+    "The release was not found in the failed download history tracker"""

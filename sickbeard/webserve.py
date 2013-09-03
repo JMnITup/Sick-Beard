@@ -41,6 +41,7 @@ from sickbeard import search_queue
 from sickbeard import image_cache
 from sickbeard import naming
 from sickbeard import failed_history
+from sickbeard import failedProcessor
 
 from sickbeard.providers import newznab
 from sickbeard.common import Quality, Overview, statusStrings
@@ -2772,6 +2773,31 @@ class Home:
 
         return json.dumps({'result': 'failure'})
 
+    @cherrypy.expose
+    def retryEpisode(self, show, season, episode):
+        try:
+            release = failed_history.findRelease(show, season, episode)
+            pp = failedProcessor.FailedProcessor(dirName=None, nzbName=release + '.nzb')
+            pp.process()
+            if pp.log:
+                ui.notifications.message('Info', pp.log)
+        except exceptions.FailedHistoryNotFoundException:
+            ui.notifications.error('Not Found Error', 'Couldn\'t find release in history. (Has it been over 30 days?)\n'
+                                   'Can\'t mark it as bad.')
+            return json.dumps({'result': 'failure'})
+        except exceptions.FailedHistoryMultiSnatchException:
+            ui.notifications.error('Multi-Snatch Error', 'The same episode was snatched again before the first one was done.\n'
+                                   'Please cancel any downloads of this episode and then set it back to wanted.\n Can\'t continue.')
+            return json.dumps({'result': 'failure'})
+        except exceptions.FailedProcessingFailed:
+            ui.notifications.error('Processing Failed', pp.log)
+            return json.dumps({'result': 'failure'})
+        except Exception as e:
+            ui.notifications.error('Unknown Error', 'Unknown exception: ' + str(e))
+            return json.dumps({'result': 'failure'})
+
+        return json.dumps({'result': 'success'})
+
 
 class UI:
 
@@ -2779,6 +2805,7 @@ class UI:
     def add_message(self):
 
         ui.notifications.message('Test 1', 'This is test number 1')
+
         ui.notifications.error('Test 2', 'This is test number 2')
 
         return "ok"

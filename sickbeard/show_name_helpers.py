@@ -272,19 +272,21 @@ def determineReleaseName(dir_name=None, nzb_name=None):
         logger.log(u"Using nzb_name for release name.")
         return nzb_name.rpartition('.')[0]
 
+    if dir_name is None:
+        return None
+
     # try to get the release name from nzb/nfo
     # TODO: Handle case-sensitivity
-    if dir_name:
-        file_types = ["*.nzb", "*.nfo"]
-        for search in file_types:
-            search_path = ek.ek(os.path.join, dir_name, search)
-            results = ek.ek(glob, search_path)
-            if len(results) == 1:
-                found_file = ek.ek(os.path.basename, results[0])
-                found_file = found_file.rpartition('.')[0]
-                if filterBadReleases(found_file):
-                    logger.log(u"Release name (" + found_file + ") found from file (" + results[0] + ")")
-                    return found_file.rpartition('.')[0]
+    file_types = ["*.nzb", "*.nfo"]
+    for search in file_types:
+        search_path = ek.ek(os.path.join, dir_name, search)
+        results = ek.ek(glob, search_path)
+        if len(results) == 1:
+            found_file = ek.ek(os.path.basename, results[0])
+            found_file = found_file.rpartition('.')[0]
+            if filterBadReleases(found_file):
+                logger.log(u"Release name (" + found_file + ") found from file (" + results[0] + ")")
+                return found_file.rpartition('.')[0]
 
     # If that fails, we try the folder
     folder = ek.ek(os.path.basename, dir_name)
